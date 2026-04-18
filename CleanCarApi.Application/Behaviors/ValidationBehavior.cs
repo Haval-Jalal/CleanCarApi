@@ -17,11 +17,11 @@ public class ValidationBehavior<TRequest, TResponse>
         _validators = validators;
     }
 
-    // Ny signatur för MediatR v12+: next är en delegate utan CancellationToken
+    // MediatR v12+ signatur: next kommer före CancellationToken
     public async Task<TResponse> Handle(
         TRequest request,
-        CancellationToken cancellationToken,
-        RequestHandlerDelegate<TResponse> next)
+        RequestHandlerDelegate<TResponse> next,
+        CancellationToken cancellationToken)
     {
         // Om det finns validators, kör dem alla
         if (_validators.Any())
