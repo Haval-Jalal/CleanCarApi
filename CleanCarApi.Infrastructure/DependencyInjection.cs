@@ -4,6 +4,7 @@ using CleanCarApi.Domain.Interfaces;
 using CleanCarApi.Infrastructure.Data;
 using CleanCarApi.Infrastructure.Repositories;
 using CleanCarApi.Infrastructure.Services;
+using CleanCarApi.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -22,12 +23,17 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // Registrerar JWT-inställningar som Options så att de kan injiceras typat
+        services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
+
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddIdentity<IdentityUser, IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+
+        var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>()!;
 
         services.AddAuthentication(options =>
         {
@@ -42,10 +48,10 @@ public static class DependencyInjection
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = configuration["Jwt:Issuer"],
-                ValidAudience = configuration["Jwt:Audience"],
+                ValidIssuer = jwtSettings.Issuer,
+                ValidAudience = jwtSettings.Audience,
                 IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
+                    Encoding.UTF8.GetBytes(jwtSettings.Key))
             };
         });
 
